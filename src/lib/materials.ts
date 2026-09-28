@@ -76,6 +76,7 @@ const DEFAULT_PALETTE = ["#8a8176", "#9d5e46", "#7a8288", "#948777"];
 
 /** Estilos y colores por categoría para los ALREDEDORES de la universidad */
 export const CATEGORY_STYLES: Record<string, { label: string; color: string; emoji: string }> = {
+  universidad: { label: "Javeriana", color: "#c2a184", emoji: "🎓" },
   comida: { label: "Gastronomía", color: "#e67e22", emoji: "🍔" },
   comercio: { label: "Comercio", color: "#3498db", emoji: "🛍️" },
   salud: { label: "Salud", color: "#e74c3c", emoji: "🏥" },
@@ -85,7 +86,6 @@ export const CATEGORY_STYLES: Record<string, { label: string; color: string; emo
   cultura: { label: "Cultura", color: "#bfa15f", emoji: "🎭" },
   residencial: { label: "Residencial", color: "#9c573f", emoji: "🏠" },
   servicios: { label: "Servicios", color: "#7a8288", emoji: "📍" },
-  universidad: { label: "Javeriana", color: "#c2a184", emoji: "🎓" },
 };
 
 function seededHash(id: string): number {
