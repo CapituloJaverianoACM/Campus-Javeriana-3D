@@ -4,6 +4,7 @@ import { Html } from "@react-three/drei";
 import { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { groundY } from "@/lib/elevation";
 import { shapeToWorldXZ } from "@/lib/geometry";
 import type { Access, PlacesData, Service } from "@/lib/types";
 
@@ -128,7 +129,7 @@ function MarkerGroup({
 
     markers.forEach((mk, i) => {
       const [x, z] = shapeToWorldXZ(mk.pos);
-      position.set(x, 0, z);
+      position.set(x, groundY(x, z), z);
       matrix.compose(position, quaternion, scale);
       m.setMatrixAt(i, matrix);
       m.setColorAt(i, colour.set(mk.colour));
@@ -165,7 +166,7 @@ function MarkerGroup({
         <Html
           position={(() => {
             const [x, z] = shapeToWorldXZ(hovered.pos);
-            return [x, PIN_HEIGHT + HEAD_RADIUS * 2.2, z];
+            return [x, groundY(x, z) + PIN_HEIGHT + HEAD_RADIUS * 2.2, z];
           })()}
           center
           distanceFactor={140}

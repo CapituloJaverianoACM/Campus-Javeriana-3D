@@ -66,7 +66,7 @@ export function Labels({
           name: p.building.name as string,
           position: new THREE.Vector3(
             p.geometry.center[0],
-            p.geometry.top + 4,
+            p.groundY + p.geometry.top + 4,
             p.geometry.center[1],
           ),
         })),

@@ -101,7 +101,11 @@ export function CampusExplorer({ data, terrain, places }: Props) {
       if (p) {
         setFocus({
           id,
-          position: [p.geometry.center[0], p.geometry.top * 0.5, p.geometry.center[1]],
+          position: [
+            p.geometry.center[0],
+            p.groundY + p.geometry.top * 0.5,
+            p.geometry.center[1],
+          ],
           // Se encuadra según lo mayor entre huella y altura, para que una torre
           // estrecha y alta no quede cortada.
           extent: Math.max(p.geometry.footprintRadius, p.geometry.top * 0.6),
@@ -188,7 +192,7 @@ export function CampusExplorer({ data, terrain, places }: Props) {
             >
               <div className="flex items-start justify-between gap-2">
                 <span className="min-w-0 break-words font-medium">
-                  {p.building.name ?? <span className="text-slate-400">Sin nombre en OSM</span>}
+                  {p.building.name ?? <span className="text-slate-400">Sin nombre (Aun)</span>}
                 </span>
                 {cat && (
                   <span
@@ -264,7 +268,7 @@ export function CampusExplorer({ data, terrain, places }: Props) {
             far: radius * 12,
             // A ~790 m con fov 45 entran los 590 m de fondo del campus. Más cerca
             // se recorta el extremo sur, que es donde están las zonas deportivas.
-            position: [radius * 1.1, radius * 1.45, radius * 1.95],
+            position: [radius * 0.85, radius * 0.95, radius * 1.45],
           }}
           gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
           onPointerMissed={() => select(null)}
@@ -395,7 +399,7 @@ export function CampusExplorer({ data, terrain, places }: Props) {
               </span>
             )}
             <h2 className="text-base font-bold leading-tight text-white">
-              {selected.building.name ?? "Edificio sin nombre en OSM"}
+              {selected.building.name ?? "Edificio sin nombre (Aun)"}
             </h2>
           </div>
 

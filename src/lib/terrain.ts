@@ -1,3 +1,4 @@
+import { drapeGeometry, groundY } from "./elevation";
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { shapeToWorldXZ } from "./geometry";
@@ -37,16 +38,22 @@ const AREA_LAYER: Record<string, number> = {
 };
 const AREA_LAYER_DEFAULT = 0.08;
 
+/**
+ * Sobre relieve, dos mallas subdivididas por separado no coinciden al milímetro: con
+ * 2 cm entre capas parpadeaban (z-fighting). Se separan ×3 conservando el orden.
+ */
+const LAYER_SCALE = 3;
+
 const PATH_LAYER = 0.18;
 /** Los escalones van por encima del sendero con el que empalman. */
 const PATH_LAYER_STEPS = 0.2;
 
 export function areaLayerY(kind: string): number {
-  return AREA_LAYER[kind] ?? AREA_LAYER_DEFAULT;
+  return (AREA_LAYER[kind] ?? AREA_LAYER_DEFAULT) * LAYER_SCALE;
 }
 
 export function pathLayerY(kind: string): number {
-  return kind === "steps" ? PATH_LAYER_STEPS : PATH_LAYER;
+  return (kind === "steps" ? PATH_LAYER_STEPS : PATH_LAYER) * LAYER_SCALE;
 }
 
 /* ------------------------------------------------------------------ *
@@ -235,8 +242,11 @@ export function pathKey(p: TerrainPath): string {
 export function buildAreaLayers(areas: TerrainArea[]): MergedLayer[] {
   const entries: { key: string; geometry: THREE.BufferGeometry }[] = [];
   for (const a of areas) {
-    const g = areaGeometry(a);
-    if (g) entries.push({ key: areaKey(a), geometry: g });
+    const flat = areaGeometry(a);
+    if (!flat) continue;
+    const g = drapeGeometry(flat);
+    flat.dispose();
+    entries.push({ key: areaKey(a), geometry: g });
   }
   return mergeByKey(entries);
 }
@@ -244,8 +254,11 @@ export function buildAreaLayers(areas: TerrainArea[]): MergedLayer[] {
 export function buildPathLayers(paths: TerrainPath[]): MergedLayer[] {
   const entries: { key: string; geometry: THREE.BufferGeometry }[] = [];
   for (const p of paths) {
-    const g = ribbonGeometry(p, pathLayerY(p.kind));
-    if (g) entries.push({ key: pathKey(p), geometry: g });
+    const flat = ribbonGeometry(p, pathLayerY(p.kind));
+    if (!flat) continue;
+    const g = drapeGeometry(flat);
+    flat.dispose();
+    entries.push({ key: pathKey(p), geometry: g });
   }
   return mergeByKey(entries);
 }
@@ -313,7 +326,7 @@ export function buildTreeInstances(trees: TerrainTree[]): TreeInstance[] {
     const crownBase = height * (conifer ? 0.22 : 0.38);
     const [x, z] = shapeToWorldXZ(t.pos);
     return {
-      position: [x, 0, z],
+      position: [x, groundY(x, z), z],
       height,
       crownRadius,
       crownBase,

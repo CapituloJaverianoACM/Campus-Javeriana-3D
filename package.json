@@ -9,6 +9,7 @@
     "osm:fetch": "bun run scripts/fetch-osm.ts",
     "osm:terrain": "bun run scripts/fetch-terrain.ts",
     "osm:places": "bun run scripts/fetch-places.ts",
+    "osm:elevation": "bun run scripts/fetch-elevation.ts",
     "typecheck": "tsc --noEmit",
     "smoke": "bun run scripts/smoke.ts"
   },

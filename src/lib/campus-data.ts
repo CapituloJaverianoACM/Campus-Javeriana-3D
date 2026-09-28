@@ -1,4 +1,5 @@
 import raw from "@/data/campus.json";
+import { clipCampus } from "./clip";
 import type { CampusData } from "./types";
 
 /**
@@ -9,4 +10,4 @@ import type { CampusData } from "./types";
  * El contrato real lo impone `scripts/fetch-osm.ts`: si se cambia el esquema de
  * salida, hay que actualizar `types.ts` a la vez.
  */
-export const campusData = raw as unknown as CampusData;
+export const campusData = clipCampus(raw as unknown as CampusData);

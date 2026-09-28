@@ -10,6 +10,7 @@ import { Labels } from "./Labels";
 import { Terrain } from "./Terrain";
 import { Places } from "./Places";
 import { buildCampusGround, campusOutlinePoints } from "@/lib/geometry";
+import { buildGroundPlate, drapeGeometry, groundY } from "@/lib/elevation";
 import { setNightMode } from "@/lib/materials";
 import type { CampusData, PlacesData, TerrainData } from "@/lib/types";
 
@@ -60,8 +61,8 @@ function castingBounds(prepared: PreparedBuilding[]): { center: THREE.Vector3; r
   for (const p of prepared) {
     const [x, z] = p.geometry.center;
     const r = p.geometry.footprintRadius;
-    box.expandByPoint(new THREE.Vector3(x - r, 0, z - r));
-    box.expandByPoint(new THREE.Vector3(x + r, p.geometry.top, z + r));
+    box.expandByPoint(new THREE.Vector3(x - r, p.groundY, z - r));
+    box.expandByPoint(new THREE.Vector3(x + r, p.groundY + p.geometry.top, z + r));
   }
   if (box.isEmpty()) return { center: new THREE.Vector3(), radius: 300 };
 
@@ -145,26 +146,59 @@ function Ground({
   radius: number;
   isNight?: boolean;
 }) {
-  const geometry = useMemo(() => buildCampusGround(data.campusOutline), [data.campusOutline]);
-  const outline = useMemo(() => campusOutlinePoints(data.campusOutline, 0.6), [data.campusOutline]);
+  const geometry = useMemo(() => {
+    const flat = buildCampusGround(data.campusOutline);
+    const g = drapeGeometry(flat);
+    flat.dispose();
+    return g;
+  }, [data.campusOutline]);
+  const plate = useMemo(() => buildGroundPlate(), []);
+  const outline = useMemo(() => {
+    // Se subdivide el contorno para que la línea siga la ladera y no la corte.
+    const raw = campusOutlinePoints(data.campusOutline, 0.6);
+    const pts: THREE.Vector3[] = [];
+    for (let i = 0; i < raw.length - 1; i++) {
+      const a = raw[i];
+      const b = raw[i + 1];
+      const n = Math.max(1, Math.ceil(a.distanceTo(b) / 10));
+      for (let k = 0; k < n; k++) {
+        const p = a.clone().lerp(b, k / n);
+        pts.push(p.setY(0.6 + groundY(p.x, p.z)));
+      }
+    }
+    if (pts.length) pts.push(pts[0].clone());
+    return pts;
+  }, [data.campusOutline]);
 
-  useEffect(() => () => geometry.dispose(), [geometry]);
+  useEffect(
+    () => () => {
+      geometry.dispose();
+      plate.top.dispose();
+      plate.skirt.dispose();
+    },
+    [geometry, plate],
+  );
 
   return (
     <group>
-      {/* Contexto urbano fuera del campus: nivelado con la rasante de las calles para
-          que las manzanas de Chapinero no queden flotando sobre un vacío. */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]} receiveShadow>
-        <planeGeometry args={[radius * 20, radius * 20]} />
+      {/* Contexto urbano dentro del rectángulo: terreno con el relieve real y costados
+          hasta un zócalo, como una maqueta recortada por las vías. Va nivelado con la
+          rasante de las calles para que las manzanas no queden flotando. */}
+      <mesh geometry={plate.top} receiveShadow>
         <meshStandardMaterial color={isNight ? "#141c26" : "#323b35"} roughness={1} />
+      </mesh>
+      <mesh geometry={plate.skirt} receiveShadow>
+        <meshStandardMaterial
+          color={isNight ? "#151a20" : "#4a4138"}
+          roughness={1}
+          side={THREE.DoubleSide}
+        />
       </mesh>
 
       {/* Superficie del campus, recortada con su contorno oficial (way/40739535).
-          Tono neutro a propósito: antes era verde césped, lo que afirmaba que TODO el
-          campus es zona verde. Desde que lib/terrain.ts dibuja las zonas verdes reales
-          (landuse=grass, leisure=park), pintar la base de verde las volvía invisibles
-          y exageraba la vegetación. Ahora el verde solo aparece donde OSM lo mapea. */}
-      <mesh geometry={geometry} position={[0, 0, 0]} receiveShadow>
+          Tono neutro a propósito: el verde solo aparece donde OSM lo mapea (ver
+          lib/terrain.ts). Se apoya sobre el relieve igual que las vías y las zonas. */}
+      <mesh geometry={geometry} receiveShadow>
         <meshStandardMaterial color={isNight ? "#212a23" : "#4e564b"} roughness={1} />
       </mesh>
 
@@ -428,7 +462,8 @@ export function Scene({
         maxDistance={radius * 3}
         // Un pelo por encima del horizonte, para no meter la cámara bajo el terreno.
         maxPolarAngle={Math.PI / 2 - 0.04}
-        target={[0, 0, 0]}
+        // Centro del rectángulo recortado (z = -norte) y a media altura del relieve.
+        target={[0, 25, 50]}
       />
     </>
   );

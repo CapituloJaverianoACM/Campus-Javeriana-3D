@@ -1,4 +1,5 @@
 import raw from "@/data/terrain.json";
+import { clipTerrain } from "./clip";
 import type { TerrainData } from "./types";
 
 /**
@@ -9,4 +10,4 @@ import type { TerrainData } from "./types";
  * de proyección de campus.json. Ambos ficheros comparten sistema de coordenadas: si
  * se regenera uno, hay que regenerar el otro.
  */
-export const terrainData = raw as unknown as TerrainData;
+export const terrainData = clipTerrain(raw as unknown as TerrainData);

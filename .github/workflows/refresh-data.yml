@@ -1,0 +1,57 @@
+name: Actualizar datos
+
+# Al hacer push a main se vuelven a pedir los datos (OpenStreetMap y elevación) y,
+# si cambiaron, se suben en un commit aparte. Ese commit lo hace GITHUB_TOKEN, que
+# por diseño no dispara otros workflows, así que no hay bucle. Igualmente se ignoran
+# los pushes que solo tocan src/data por si lo sube alguien a mano.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "src/data/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-data
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install --frozen-lockfile
+
+      # El orden importa: terrain, places y elevation leen el origen de proyección
+      # y el contorno que deja fetch-osm en campus.json.
+      - name: Volúmenes (edificios)
+        run: bun run osm:fetch
+      - name: Suelo (vías, zonas, árboles)
+        run: bun run osm:terrain
+      - name: Accesos y servicios
+        run: bun run osm:places
+      - name: Elevación
+        run: bun run osm:elevation
+
+      - name: Comprobar tipos con los datos nuevos
+        run: bunx tsc --noEmit
+
+      - name: Commit de los datos
+        run: |
+          if git diff --quiet -- src/data; then
+            echo "Sin cambios en los datos."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data
+          git commit -m "Actualizar datos de OSM y elevación [skip ci]"
+          git pull --rebase origin main
+          git push origin HEAD:main

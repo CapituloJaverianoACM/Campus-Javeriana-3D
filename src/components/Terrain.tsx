@@ -87,7 +87,7 @@ function Trees({ instances }: { instances: TreeInstance[] }) {
       (t, m) => {
         const r = Math.max(t.height * 0.025, 0.08);
         // El tronco entra un poco en la copa para que no se vea la junta.
-        position.set(t.position[0], 0, t.position[2]);
+        position.set(t.position[0], t.position[1], t.position[2]);
         quaternion.setFromAxisAngle(up, t.rotation);
         scale.set(r, t.crownBase * 1.15, r);
         m.compose(position, quaternion, scale);
@@ -101,7 +101,7 @@ function Trees({ instances }: { instances: TreeInstance[] }) {
       broadleaves,
       (t, m) => {
         const half = (t.height - t.crownBase) / 2;
-        position.set(t.position[0], t.crownBase + half, t.position[2]);
+        position.set(t.position[0], t.position[1] + t.crownBase + half, t.position[2]);
         quaternion.setFromAxisAngle(up, t.rotation);
         scale.set(t.crownRadius, half, t.crownRadius);
         m.compose(position, quaternion, scale);
@@ -114,7 +114,7 @@ function Trees({ instances }: { instances: TreeInstance[] }) {
       crownMat,
       conifers,
       (t, m) => {
-        position.set(t.position[0], t.crownBase, t.position[2]);
+        position.set(t.position[0], t.position[1] + t.crownBase, t.position[2]);
         quaternion.setFromAxisAngle(up, t.rotation);
         scale.set(t.crownRadius, t.height - t.crownBase, t.crownRadius);
         m.compose(position, quaternion, scale);

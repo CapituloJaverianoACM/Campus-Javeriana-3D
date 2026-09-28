@@ -1,4 +1,5 @@
 import raw from "@/data/places.json";
+import { clipPlaces } from "./clip";
 import type { PlacesData } from "./types";
 
 /**
@@ -7,4 +8,4 @@ import type { PlacesData } from "./types";
  * Los tres datasets comparten el origen de proyección de campus.json; ver
  * `scripts/fetch-places.ts`. Si se regenera uno, hay que regenerar los tres.
  */
-export const placesData = raw as unknown as PlacesData;
+export const placesData = clipPlaces(raw as unknown as PlacesData);
