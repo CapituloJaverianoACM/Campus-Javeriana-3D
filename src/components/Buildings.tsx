@@ -76,9 +76,14 @@ export function Buildings({ prepared, selectedId, onSelect, onHover }: Props) {
             }}
             onPointerOver={(e) => {
               e.stopPropagation();
+              // En táctil no hay "salir": el hover se quedaría pegado hasta otro toque.
+              if (e.pointerType === "touch") return;
               onHover(building.id);
             }}
-            onPointerOut={() => onHover(null)}
+            onPointerOut={(e) => {
+              e.stopPropagation();
+              onHover(null);
+            }}
           >
             {/* El z-fighting de los `building:part` contra su envolvente se resuelve
                 con polygonOffset en el material (ver lib/materials.ts). */}
